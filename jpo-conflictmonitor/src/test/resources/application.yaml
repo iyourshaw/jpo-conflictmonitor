@@ -33,7 +33,7 @@ spring.kafka.bootstrap-servers: localhost:10092  # Test port 10092
 
 # Custom kafka properties
 kafka.topics:
-  autoCreateTopics: false  # Don't try to create properties in tests
+  autoCreateTopics: false  # Don't try to create topics during tests
   numPartitions: 1
   numReplicas: 1
   createTopics:
