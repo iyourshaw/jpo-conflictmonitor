@@ -511,6 +511,7 @@ public class ConflictMonitorProperties implements EnvironmentAware {
 
    @PostConstruct
    void initialize() {
+      logger.info("ConflictMonitorProperties.initialize()");
       setVersion(buildProperties.getVersion());
       logger.info("groupId: {}", buildProperties.getGroup());
       logger.info("artifactId: {}", buildProperties.getArtifact());

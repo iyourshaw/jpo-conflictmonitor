@@ -5,7 +5,7 @@
     </encoder>
   </appender>
   <logger name="us.dot.its.jpo.conflictmonitor.monitor" level="INFO"/>
-  <root level="OFF">
+  <root level="INFO">
     <appender-ref ref="CONSOLE"/>
   </root>
 </configuration>
