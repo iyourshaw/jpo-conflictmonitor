@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<html>
+    <head>
+        <title>MBeans</title>
+        
+    </head>
+    <style>
+        html{
+            font-size: 16px;
+            font-family: sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        table, tr, td {
+            border: 1px solid;
+        }
+        td {
+             padding: 3px;
+        }
+    </style>
+    <body>
+        <p>
+            <a th:href="@{/}">Home</a>
+        </p>
+        <h1>MBean</h1>
+
+
+        
+        <p style="color:red" th:if="${bean.error != null}" th:text="${bean.error}"/>
+        <div th:if="${bean.error == null}">
+
+            <p style="font-size:small">
+                Timestamp <span th:text="${timestamp}"/>
+            </p>
+            <h3>Name: <span th:text="${name}"/></h3>
+            <h3>Class: <span th:text="${bean.className}" /></h3>
+            <h3 th:if="${attributes != null}">Attributes: <span th:text="${attributes}"/></h3>
+            <table>
+                <thead>
+                    <th>Attribute</th>
+                    <th>Value</th>
+                </thead>
+                <tbody>
+                    <tr th:each="entry: ${bean.allAttributes}">
+                        <td th:text="${entry.key}"/>
+                        <td th:text="${entry.value}"/>
+                            
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>

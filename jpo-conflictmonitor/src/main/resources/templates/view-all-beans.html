@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<html>
+    <head>
+        <title>MBeans</title>
+        
+    </head>
+    <style>
+        html{
+            font-size: 16px;
+            font-family: sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        table, tr, td {
+            border: 1px solid;
+        }
+        td {
+            overflow-wrap: break-word;
+            padding: 3px;
+        }
+        span {
+            overflow-wrap: break-word;
+        }
+    </style>
+    <body>
+        <p>
+            <a th:href="@{/}">Home</a>
+        </p>
+        <h1>MBeans</h1>
+        <h3 th:if="${domain != null}">Domain: <span th:text="${domain}"/></h3>
+        <h3 th:if="${keyFilter != null}">Key: <span th:text="${keyFilter}"/></h3>
+        <h3 th:if="${classNameFilter != null}">Class: <span th:text="${classNameFilter}"/></h3>
+        <h3 th:if="${attributes != null}">Attributes: <span th:text="${attributes}"/></h3>
+       
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Class</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="bean: ${beans}">
+                    <td>
+                        <a th:if="${attributes == null}" th:text="${bean.name}" th:href="@{/ui/bean/{name}(name = ${#uris.escapePathSegment(bean.name)})}" />
+                        <a th:if="${attributes != null}" th:text="${bean.name}" th:href="@{/ui/bean/{name}?attribute={attribute}(name = ${#uris.escapePathSegment(bean.name)}, attribute = ${attributes})}" />
+                    </td>
+                    <td th:text="${bean.className}"/>
+                 </tr>
+            </tbody>
+        </table>
+       
+    </body>
+</html>
