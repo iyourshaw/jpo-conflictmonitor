@@ -9,6 +9,7 @@ import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Controller;
 
@@ -55,12 +56,14 @@ public class MonitorServiceController {
     private static final Logger logger = LoggerFactory.getLogger(MonitorServiceController.class);
     org.apache.kafka.common.serialization.Serdes bas;
 
-   
     
+   
+
 
     
     @Autowired
-    public MonitorServiceController(ConflictMonitorProperties conflictMonitorProps) {
+    public MonitorServiceController(ConflictMonitorProperties conflictMonitorProps,
+        MapValidationAlgorithm mapCountAlgo) {
         
 
        
@@ -81,21 +84,10 @@ public class MonitorServiceController {
             repartitionAlgo.setParameters(repartitionParams);
             Runtime.getRuntime().addShutdownHook(new Thread(repartitionAlgo::stop));
             repartitionAlgo.start();
-            
-           
-           
 
+            
             // Map Broadcast Rate Topology
-            // Sends "MAP Broadcast Rate" events when the number of MAPs per rolling period is too low or too high
-            MapValidationAlgorithmFactory mapAlgoFactory = conflictMonitorProps.getMapValidationAlgorithmFactory();
-            String mapAlgo = conflictMonitorProps.getMapValidationAlgorithm();
-            MapValidationAlgorithm mapCountAlgo = mapAlgoFactory.getAlgorithm(mapAlgo);
-            MapValidationParameters mapCountParams = conflictMonitorProps.getMapValidationParameters();
-            logger.info("Map params {}", mapCountParams);
-            if (mapCountAlgo instanceof StreamsTopology) {
-                ((StreamsTopology)mapCountAlgo).setStreamsProperties(conflictMonitorProps.createStreamProperties("mapBroadcastRate"));
-            }
-            mapCountAlgo.setParameters(mapCountParams);
+            // Sends "MAP Broadcast Rate" events when the number of MAPs per rolling period is too low or too high          
             Runtime.getRuntime().addShutdownHook(new Thread(mapCountAlgo::stop));
             mapCountAlgo.start();
 
