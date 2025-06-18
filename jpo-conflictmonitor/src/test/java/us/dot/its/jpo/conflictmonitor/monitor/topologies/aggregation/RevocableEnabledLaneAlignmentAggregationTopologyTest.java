@@ -5,6 +5,8 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.KStream;
 import org.junit.jupiter.api.Test;
+import us.dot.its.jpo.asn.j2735.r2024.MapData.LaneAttributes_Vehicle;
+import us.dot.its.jpo.asn.j2735.r2024.MapData.LaneTypeAttributes;
 import us.dot.its.jpo.conflictmonitor.monitor.algorithms.aggregation.revocable_enabled_lane_alignment.RevocableEnabledLaneAlignmentAggregationKey;
 import us.dot.its.jpo.conflictmonitor.monitor.models.events.RevocableEnabledLaneAlignmentEvent;
 import us.dot.its.jpo.conflictmonitor.monitor.models.events.RevocableEnabledLaneAlignmentEventAggregation;
@@ -117,21 +119,17 @@ public class RevocableEnabledLaneAlignmentAggregationTopologyTest
         });
     }
 
-    private Map<Integer, J2735LaneTypeAttributes> getLaneTypeAttributes() {
+    private Map<Integer, LaneTypeAttributes> getLaneTypeAttributes() {
 
-        J2735BitString bs = new J2735BitString();
-        for (J2735LaneAttributesVehicle attribEnum : J2735LaneAttributesVehicle.values()) {
-            bs.put(attribEnum.name(), false);
-        }
+        LaneAttributes_Vehicle bs = new LaneAttributes_Vehicle();
 
-        J2735BitString bsRevocable = new J2735BitString();
-        bsRevocable.putAll(bs);
-        bsRevocable.put(J2735LaneAttributesVehicle.isVehicleRevocableLane.name(), true);
+        LaneAttributes_Vehicle bsRevocable = new LaneAttributes_Vehicle();
+        bsRevocable.setIsVehicleRevocableLane(true);
 
-        var attrib1 = new J2735LaneTypeAttributes();
-        var attrib2 = new J2735LaneTypeAttributes();
-        var attrib3 = new J2735LaneTypeAttributes();
-        var attrib4 = new J2735LaneTypeAttributes();
+        var attrib1 = new LaneTypeAttributes();
+        var attrib2 = new LaneTypeAttributes();
+        var attrib3 = new LaneTypeAttributes();
+        var attrib4 = new LaneTypeAttributes();
         attrib1.setVehicle(bsRevocable);
         attrib2.setVehicle(bsRevocable);
         attrib3.setVehicle(bs);

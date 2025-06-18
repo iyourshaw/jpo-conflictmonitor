@@ -10,14 +10,15 @@ ENV MAVEN_GITHUB_ORG=$MAVEN_GITHUB_ORG
 
 COPY ./jpo-conflictmonitor/pom.xml ./jpo-conflictmonitor/
 COPY ./settings.xml ./jpo-conflictmonitor/
-
-# Download dependencies alone to cache them first
-WORKDIR /home/jpo-conflictmonitor
-RUN mvn -s settings.xml dependency:resolve
-
-# Copy the source code and build the conflict monitor
+COPY ./pom.xml .
+COPY ./jpo-asn-pojos ./jpo-asn-pojos
 COPY ./jpo-conflictmonitor/src ./src
-RUN mvn -s settings.xml install -DskipTests
+
+WORKDIR /home/jpo-asn-pojos
+RUN mvn install -DskipTests
+
+WORKDIR /home/jpo-conflictmonitor
+RUN mvn -s ./settings.xml install -DskipTests
 
 FROM amazoncorretto:21
 

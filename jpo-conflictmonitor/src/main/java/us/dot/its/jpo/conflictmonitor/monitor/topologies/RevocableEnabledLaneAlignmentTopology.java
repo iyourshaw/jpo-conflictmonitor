@@ -10,6 +10,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
+import us.dot.its.jpo.asn.j2735.r2024.MapData.LaneTypeAttributes;
 import us.dot.its.jpo.conflictmonitor.monitor.algorithms.BaseStreamsBuilder;
 import us.dot.its.jpo.conflictmonitor.monitor.algorithms.aggregation.revocable_enabled_lane_alignment.RevocableEnabledLaneAlignmentAggregationAlgorithm;
 import us.dot.its.jpo.conflictmonitor.monitor.algorithms.aggregation.revocable_enabled_lane_alignment.RevocableEnabledLaneAlignmentAggregationKey;
@@ -66,7 +67,7 @@ public class RevocableEnabledLaneAlignmentTopology
                 // Check the MAP for revocable lanes
                 ProcessedMap<LineString> map = spatMap.getMap();
 
-                Map<Integer, J2735LaneTypeAttributes> allLaneAttributes
+                Map<Integer, LaneTypeAttributes> allLaneAttributes
                         = getLaneTypeAttributes(map)
                         .entrySet().stream()
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

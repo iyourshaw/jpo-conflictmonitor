@@ -4,7 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Generated;
 import lombok.Getter;
 import lombok.Setter;
-import us.dot.its.jpo.ode.plugin.j2735.J2735LaneTypeAttributes;
+import us.dot.its.jpo.asn.j2735.r2024.MapData.LaneTypeAttributes;
 import us.dot.its.jpo.ode.plugin.j2735.J2735MovementPhaseState;
 
 import java.util.Map;
@@ -26,7 +26,7 @@ public class RevocableEnabledLaneAlignmentEvent extends Event {
     /**
      * Map of LaneID to DE_LaneTypeAttributes, including all lanes, revocable or not
      */
-    private Map<Integer, J2735LaneTypeAttributes> laneTypeAttributes;
+    private Map<Integer, LaneTypeAttributes> laneTypeAttributes;
 
     /**
      * Set of LanIDs with the 'revocable' bit set in the MAP message.
