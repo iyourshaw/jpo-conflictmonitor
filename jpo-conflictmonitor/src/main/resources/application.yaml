@@ -646,13 +646,13 @@ priority.preemption.request:
 
 metrics:
   common:
-    interval: 30
-    interval-units: SECONDS
-    grace-period-ms: 500
-    check-interval: 10
-    check-interval-units: SECONDS
-    retention-time: 1
-    retention-time-units: MINUTES
+    interval: 1
+    interval-units: HOURS
+    grace-period-ms: 1000
+    check-interval: 1
+    check-interval-units: MINUTES
+    retention-time: 3
+    retention-time-units: HOURS
   priority.request:
     algorithm: defaultPriorityRequestMetricsAlgorithm
     debug: true
