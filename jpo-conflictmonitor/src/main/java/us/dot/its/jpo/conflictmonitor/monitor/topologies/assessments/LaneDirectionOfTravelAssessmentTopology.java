@@ -187,7 +187,8 @@ public class LaneDirectionOfTravelAssessmentTopology
      * @return true if there is a violation, heading is out of tolerance, false if within tolerance, OK
      */
     public static boolean headingViolation(LaneDirectionOfTravelAssessmentGroup group) {
-        return Math.abs(group.getMedianHeading() - group.getExpectedHeading()) > group.getTolerance();
+        final double absDiff = Math.abs(group.getMedianHeading() - group.getExpectedHeading());
+        return Math.min(absDiff, 360.0d - absDiff) > group.getTolerance();
     }
     
 }

@@ -1,6 +1,7 @@
 package us.dot.its.jpo.conflictmonitor.monitor.topologies.assessments;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,6 +46,6 @@ public class LaneDirectionOfTravelAssessmentTopology_headingViolationTest {
 
         boolean violation = LaneDirectionOfTravelAssessmentTopology.headingViolation(group);
 
-        assertEquals(expectedViolation, violation);
+        assertThat(violation, equalTo(expectedViolation));
     }
 }
