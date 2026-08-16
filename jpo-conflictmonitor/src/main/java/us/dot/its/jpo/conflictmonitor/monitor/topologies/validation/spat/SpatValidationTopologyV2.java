@@ -374,7 +374,7 @@ public class SpatValidationTopologyV2 extends BaseSpatValidationTopology {
     }
 
     private SpatBroadcastRateAssessment updateAssessment(TimestampedEvents events, SpatBroadcastRateAssessment assessment) {
-        assessment.setNumberOfSpats(assessment.getNumberOfSpats() + 1);
+        assessment.setNumberOfMessages(assessment.getNumberOfMessages() + 1);
         if (events.pairEvent() != null) {
             assessment.setNumberOfPairViolations(assessment.getNumberOfPairViolations() + 1);
             var timePeriod = events.pairEvent().getTimePeriod();
