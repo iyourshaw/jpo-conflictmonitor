@@ -118,7 +118,7 @@ public class LaneDirectionOfTravelAnalytics implements LaneDirectionOfTravelAlgo
                     
                 }
 
-                double medianHeading = MathFunctions.getMedian(headings);
+                double medianHeading = MathFunctions.getMedianHeading(headings);
                 double medianDistance = MathFunctions.getMedian(offsetDistances);
                 long medianTimestamp = MathFunctions.getMedianTimestamp(times);
 

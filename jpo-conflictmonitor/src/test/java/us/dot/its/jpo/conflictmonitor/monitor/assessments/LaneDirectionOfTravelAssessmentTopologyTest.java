@@ -14,6 +14,7 @@ import us.dot.its.jpo.conflictmonitor.monitor.models.notifications.LaneDirection
 import us.dot.its.jpo.conflictmonitor.monitor.serialization.JsonSerdes;
 import us.dot.its.jpo.conflictmonitor.monitor.topologies.assessments.LaneDirectionOfTravelAssessmentTopology;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
 
@@ -212,6 +213,75 @@ public class LaneDirectionOfTravelAssessmentTopologyTest {
             assertEquals(group.getMedianCenterlineDistance(), 96.50633375287359);
             assertEquals(group.getTolerance(), 20);
 
+        }
+    }
+
+    @Test
+    public void testWraparoundHeadingDoesNotProduceFalsePositive() {
+        // Regression test for a false-positive Lane Direction of Travel notification bug:
+        // vehicle headings that straddle the 0/360 degree boundary (e.g. a northbound lane)
+        // but are all actually close to the expected road heading of ~2 degrees. Before the
+        // fix, the naive numeric median used for medianVehicleHeading/medianHeading sorted
+        // these values to [1, 2, 5, 355, 358, 359] and averaged the two middle values,
+        // producing a median ~180 degrees away from the true heading and tripping a false
+        // heading violation.
+        LaneDirectionOfTravelAssessmentTopology assessment = new LaneDirectionOfTravelAssessmentTopology();
+        LaneDirectionOfTravelAssessmentParameters parameters = new LaneDirectionOfTravelAssessmentParameters();
+        parameters.setDebug(false);
+        parameters.setHeadingToleranceDegrees(20);
+        parameters.setLaneDirectionOfTravelEventTopicName(kafkaTopicLaneDirectionOfTravelEvent);
+        parameters.setLaneDirectionOfTravelAssessmentOutputTopicName(kafkaTopicLaneDirectionOfTravelAssessment);
+        parameters.setLookBackPeriodDays(60);
+        parameters.setLookBackPeriodGraceTimeSeconds(30);
+        parameters.setLaneDirectionOfTravelNotificationOutputTopicName(laneDirectionOfTravelAssessmentNotificationOutputTopicName);
+        parameters.setMinimumNumberOfEvents(1);
+        parameters.setDistanceFromCenterlineToleranceCm(50);
+        assessment.setParameters(parameters);
+
+        Topology topology = assessment.buildTopology();
+
+        double[] wraparoundHeadings = {355.0, 358.0, 2.0, 5.0, 359.0, 1.0};
+
+        try (TopologyTestDriver driver = new TopologyTestDriver(topology)) {
+            TestInputTopic<String, String> inputTopic = driver.createInputTopic(
+                kafkaTopicLaneDirectionOfTravelEvent,
+                Serdes.String().serializer(),
+                Serdes.String().serializer());
+
+            TestOutputTopic<String, LaneDirectionOfTravelAssessment> outputTopic = driver.createOutputTopic(
+                kafkaTopicLaneDirectionOfTravelAssessment,
+                Serdes.String().deserializer(),
+                JsonSerdes.LaneDirectionOfTravelAssessment().deserializer());
+
+            for (double heading : wraparoundHeadings) {
+                String event = "{\"eventGeneratedAt\":1673394387458,\"eventType\":\"LaneDirectionOfTravel\",\"timestamp\":1655493252811,"
+                    + "\"roadRegulatorID\":0,\"intersectionID\":12109,\"laneID\":12,\"laneSegmentNumber\":8,"
+                    + "\"laneSegmentInitialLatitude\":39.58972728935065,\"laneSegmentInitialLongitude\":-105.091329041372,"
+                    + "\"laneSegmentFinalLatitude\":39.59003379187557,\"laneSegmentFinalLongitude\":-105.09136780827767,"
+                    + "\"expectedHeading\":2.0,\"medianVehicleHeading\":" + heading
+                    + ",\"medianDistanceFromCenterline\":0,\"aggregateBSMCount\":1}";
+                inputTopic.pipeInput(laneDirectionOfTravelEventKey, event);
+            }
+
+            List<KeyValue<String, LaneDirectionOfTravelAssessment>> assessmentResults = outputTopic.readKeyValuesToList();
+            LaneDirectionOfTravelAssessment output = assessmentResults.get(assessmentResults.size() - 1).value;
+
+            List<LaneDirectionOfTravelAssessmentGroup> groups = output.getLaneDirectionOfTravelAssessmentGroup();
+            assertEquals(groups.size(), 1);
+
+            LaneDirectionOfTravelAssessmentGroup group = groups.get(0);
+            assertEquals(group.getLaneID(), 12);
+            assertEquals(group.getSegmentID(), 8);
+
+            // The circular median lands near the true ~0/360 degree cluster, not the
+            // ~180 degree value a naive numeric median would produce.
+            assertEquals(0.0, group.getMedianHeading(), 0.01);
+
+            // With the correct median, all six samples are within tolerance of the
+            // expected ~2 degree road heading, so no false-positive violation is raised.
+            assertEquals(group.getInToleranceEvents(), 6);
+            assertEquals(group.getOutOfToleranceEvents(), 0);
+            assertFalse(LaneDirectionOfTravelAssessmentTopology.headingViolation(group));
         }
     }
 }
