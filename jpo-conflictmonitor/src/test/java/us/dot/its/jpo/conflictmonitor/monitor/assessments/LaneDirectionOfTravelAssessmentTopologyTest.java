@@ -14,7 +14,9 @@ import us.dot.its.jpo.conflictmonitor.monitor.models.notifications.LaneDirection
 import us.dot.its.jpo.conflictmonitor.monitor.serialization.JsonSerdes;
 import us.dot.its.jpo.conflictmonitor.monitor.topologies.assessments.LaneDirectionOfTravelAssessmentTopology;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.equalTo;
 
 import java.util.List;
 
@@ -218,13 +220,6 @@ public class LaneDirectionOfTravelAssessmentTopologyTest {
 
     @Test
     public void testWraparoundHeadingDoesNotProduceFalsePositive() {
-        // Regression test for a false-positive Lane Direction of Travel notification bug:
-        // vehicle headings that straddle the 0/360 degree boundary (e.g. a northbound lane)
-        // but are all actually close to the expected road heading of ~2 degrees. Before the
-        // fix, the naive numeric median used for medianVehicleHeading/medianHeading sorted
-        // these values to [1, 2, 5, 355, 358, 359] and averaged the two middle values,
-        // producing a median ~180 degrees away from the true heading and tripping a false
-        // heading violation.
         LaneDirectionOfTravelAssessmentTopology assessment = new LaneDirectionOfTravelAssessmentTopology();
         LaneDirectionOfTravelAssessmentParameters parameters = new LaneDirectionOfTravelAssessmentParameters();
         parameters.setDebug(false);
@@ -267,21 +262,15 @@ public class LaneDirectionOfTravelAssessmentTopologyTest {
             LaneDirectionOfTravelAssessment output = assessmentResults.get(assessmentResults.size() - 1).value;
 
             List<LaneDirectionOfTravelAssessmentGroup> groups = output.getLaneDirectionOfTravelAssessmentGroup();
-            assertEquals(groups.size(), 1);
+            assertThat(groups.size(), equalTo(1));
 
-            LaneDirectionOfTravelAssessmentGroup group = groups.get(0);
-            assertEquals(group.getLaneID(), 12);
-            assertEquals(group.getSegmentID(), 8);
-
-            // The circular median lands near the true ~0/360 degree cluster, not the
-            // ~180 degree value a naive numeric median would produce.
-            assertEquals(0.0, group.getMedianHeading(), 0.01);
-
-            // With the correct median, all six samples are within tolerance of the
-            // expected ~2 degree road heading, so no false-positive violation is raised.
-            assertEquals(group.getInToleranceEvents(), 6);
-            assertEquals(group.getOutOfToleranceEvents(), 0);
-            assertFalse(LaneDirectionOfTravelAssessmentTopology.headingViolation(group));
+            LaneDirectionOfTravelAssessmentGroup group = groups.getFirst();
+            assertThat(group.getLaneID(), equalTo(12));
+            assertThat(group.getSegmentID(), equalTo(8));
+            assertThat(group.getMedianHeading(), closeTo(0.0, 0.01));
+            assertThat(group.getInToleranceEvents(), equalTo(6));
+            assertThat(group.getOutOfToleranceEvents(), equalTo(0));
+            assertThat(LaneDirectionOfTravelAssessmentTopology.headingViolation(group), equalTo(false));
         }
     }
 }

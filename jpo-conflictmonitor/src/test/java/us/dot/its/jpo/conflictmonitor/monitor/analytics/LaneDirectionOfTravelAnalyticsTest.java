@@ -1,6 +1,8 @@
 package us.dot.its.jpo.conflictmonitor.monitor.analytics;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.equalTo;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -63,10 +65,9 @@ public class LaneDirectionOfTravelAnalyticsTest {
 
         ArrayList<LaneDirectionOfTravelEvent> events = analytics.getLaneDirectionEvents(path, lane, segmentBsmMap);
 
-        assertEquals(1, events.size());
-        LaneDirectionOfTravelEvent event = events.get(0);
-        assertEquals(2, event.getAggregateBSMCount());
-        // Only the BSM with a valid heading (5 degrees) contributes to the median.
-        assertEquals(5.0, event.getMedianVehicleHeading(), 0.0001);
+        assertThat(events.size(), equalTo(1));
+        LaneDirectionOfTravelEvent event = events.getFirst();
+        assertThat(event.getAggregateBSMCount(), equalTo(2));
+        assertThat(event.getMedianVehicleHeading(), closeTo(5.0, 0.0001));
     }
 }
