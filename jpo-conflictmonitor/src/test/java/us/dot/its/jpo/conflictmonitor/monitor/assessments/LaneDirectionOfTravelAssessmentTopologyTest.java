@@ -1,5 +1,6 @@
 package us.dot.its.jpo.conflictmonitor.monitor.assessments;
 
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.TestInputTopic;
@@ -218,6 +219,8 @@ public class LaneDirectionOfTravelAssessmentTopologyTest {
         }
     }
 
+    // Regression test for fix for median calculation near 0/360, which formerly produced false
+    // positive events with incorrect 180 degree heading offsets.
     @Test
     public void testWraparoundHeadingDoesNotProduceFalsePositive() {
         LaneDirectionOfTravelAssessmentTopology assessment = new LaneDirectionOfTravelAssessmentTopology();
@@ -237,29 +240,44 @@ public class LaneDirectionOfTravelAssessmentTopologyTest {
 
         double[] wraparoundHeadings = {355.0, 358.0, 2.0, 5.0, 359.0, 1.0};
 
-        try (TopologyTestDriver driver = new TopologyTestDriver(topology)) {
+        try (TopologyTestDriver driver = new TopologyTestDriver(topology);
+             Serde<String> stringSerde = Serdes.String();
+             Serde<LaneDirectionOfTravelAssessment> assessmentSerde = JsonSerdes.LaneDirectionOfTravelAssessment()) {
             TestInputTopic<String, String> inputTopic = driver.createInputTopic(
                 kafkaTopicLaneDirectionOfTravelEvent,
-                Serdes.String().serializer(),
-                Serdes.String().serializer());
+                stringSerde.serializer(),
+                stringSerde.serializer());
 
             TestOutputTopic<String, LaneDirectionOfTravelAssessment> outputTopic = driver.createOutputTopic(
                 kafkaTopicLaneDirectionOfTravelAssessment,
-                Serdes.String().deserializer(),
-                JsonSerdes.LaneDirectionOfTravelAssessment().deserializer());
+                stringSerde.deserializer(),
+                assessmentSerde.deserializer());
 
             for (double heading : wraparoundHeadings) {
-                String event = "{\"eventGeneratedAt\":1673394387458,\"eventType\":\"LaneDirectionOfTravel\",\"timestamp\":1655493252811,"
-                    + "\"roadRegulatorID\":0,\"intersectionID\":12109,\"laneID\":12,\"laneSegmentNumber\":8,"
-                    + "\"laneSegmentInitialLatitude\":39.58972728935065,\"laneSegmentInitialLongitude\":-105.091329041372,"
-                    + "\"laneSegmentFinalLatitude\":39.59003379187557,\"laneSegmentFinalLongitude\":-105.09136780827767,"
-                    + "\"expectedHeading\":2.0,\"medianVehicleHeading\":" + heading
-                    + ",\"medianDistanceFromCenterline\":0,\"aggregateBSMCount\":1}";
+                String event = """
+                    {
+                      "eventGeneratedAt": 1673394387458,
+                      "eventType": "LaneDirectionOfTravel",
+                      "timestamp": 1655493252811,
+                      "roadRegulatorID": 0,
+                      "intersectionID": 12109,
+                      "laneID": 12,
+                      "laneSegmentNumber": 8,
+                      "laneSegmentInitialLatitude": 39.58972728935065,
+                      "laneSegmentInitialLongitude": -105.091329041372,
+                      "laneSegmentFinalLatitude": 39.59003379187557,
+                      "laneSegmentFinalLongitude": -105.09136780827767,
+                      "expectedHeading": 2.0,
+                      "medianVehicleHeading": %s,
+                      "medianDistanceFromCenterline": 0,
+                      "aggregateBSMCount": 1
+                    }
+                    """.formatted(heading);
                 inputTopic.pipeInput(laneDirectionOfTravelEventKey, event);
             }
 
             List<KeyValue<String, LaneDirectionOfTravelAssessment>> assessmentResults = outputTopic.readKeyValuesToList();
-            LaneDirectionOfTravelAssessment output = assessmentResults.get(assessmentResults.size() - 1).value;
+            LaneDirectionOfTravelAssessment output = assessmentResults.getLast().value;
 
             List<LaneDirectionOfTravelAssessmentGroup> groups = output.getLaneDirectionOfTravelAssessmentGroup();
             assertThat(groups.size(), equalTo(1));
